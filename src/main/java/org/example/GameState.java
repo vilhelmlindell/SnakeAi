@@ -48,9 +48,7 @@ public class GameState {
     }
     
     public void generateApple() {
-        if (Apple != null) {
-            Apple = new Point(0, 0);
-        }
+        Apple = new Point(0, 0);
         
         int randomInt = random.nextInt(gridWidth() * gridHeight());
         for (Point excludedPoint : SnakeParts) {

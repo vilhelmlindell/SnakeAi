@@ -13,6 +13,13 @@ public class Point {
         X += point.X;
         Y += point.Y;
     }
+    public static Point(Point a, Point b) {
+        return new Point(a.X + b.X, a.Y + b.Y);
+    }
+    public void subtract(Point point) {
+        X -= point.X;
+        Y -= point.Y;
+    }
     
     @Override
     public boolean equals(Object obj) {
