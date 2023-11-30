@@ -1,5 +1,7 @@
 package org.example;
 
+import java.util.Objects;
+
 public class Point {
     public int X;
     public int Y;
@@ -13,12 +15,11 @@ public class Point {
         X += point.X;
         Y += point.Y;
     }
-    public static Point(Point a, Point b) {
+    public static Point add(Point a, Point b) {
         return new Point(a.X + b.X, a.Y + b.Y);
     }
-    public void subtract(Point point) {
-        X -= point.X;
-        Y -= point.Y;
+    public static Point subtract(Point a, Point b) {
+        return new Point(a.X - b.X, a.Y - b.Y);
     }
     
     @Override
@@ -31,5 +32,9 @@ public class Point {
         }
         Point otherPoint = (Point) obj;
         return X == otherPoint.X && Y == otherPoint.Y;
+    }
+    @Override
+    public int hashCode() {
+        return Objects.hash(X, Y);
     } 
 }

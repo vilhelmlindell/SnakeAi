@@ -4,4 +4,5 @@ public enum Cell {
     EMPTY,
     APPLE,
     SNAKE,
+    HEAD,
 }

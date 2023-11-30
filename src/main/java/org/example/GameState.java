@@ -9,10 +9,16 @@ public class GameState {
     public Point Apple;
     public Direction SnakeDirection;
     public boolean GameOver = false;
+    public boolean ReachedApple = false;
     private final Random random;
     
     public GameState(int gridWidth, int gridHeight) {
         Grid = new Cell[gridWidth][gridHeight];
+        for (int x = 0; x < gridWidth; x++) {
+            for (int y = 0; y < gridHeight; y++) {
+                Grid[x][y] = Cell.EMPTY;
+            }
+        }
         SnakeParts = new ArrayDeque<>();
         SnakeDirection = Direction.NORTH;
         random = new Random(System.currentTimeMillis());
@@ -20,22 +26,29 @@ public class GameState {
     
     public void update() {
         Point newHead = new Point(SnakeParts.getLast().X, SnakeParts.getLast().Y);
+        if (SnakeParts.size() > 1) {
+            Grid[newHead.X][newHead.Y] = Cell.SNAKE;
+        }
         newHead.add(SnakeDirection.value());
         
-        boolean collidedWithSelf = SnakeParts.contains(newHead);
-        boolean outsideGrid = newHead.X < 0 || newHead.Y < 0 || newHead.X > gridWidth() || newHead.Y > gridHeight();
+        boolean collidedWithSelf = Grid[newHead.X][newHead.Y] == Cell.SNAKE;
         
-        if (collidedWithSelf || outsideGrid) {
+        if (collidedWithSelf || pointOutsideGrid(newHead)) {
             GameOver = true;
             return;
         }
         
         SnakeParts.add(newHead);
-        
+        Grid[newHead.X][newHead.Y] = Cell.HEAD;
+
+        Point tail = SnakeParts.peek();
+        assert tail != null;
         if (newHead.equals(Apple)) {
-            generateApple();
+            ReachedApple = true;
+            Grid[tail.X][tail.Y] = Cell.SNAKE;
         }
         else {
+            Grid[tail.X][tail.Y] = Cell.EMPTY;
             SnakeParts.remove();
         }
     }
@@ -46,11 +59,16 @@ public class GameState {
     public int gridHeight() {
         return Grid[0].length;
     }
+    public boolean pointOutsideGrid(Point point) {
+        return point.X < 0 || point.Y < 0 || point.X >= gridWidth() || point.Y >= gridHeight();
+    }
     
     public void generateApple() {
-        Apple = new Point(0, 0);
-        
-        int randomInt = random.nextInt(gridWidth() * gridHeight());
+        if (Apple == null) {
+            Apple = new Point(0, 0);
+        }
+        Grid[Apple.X][Apple.Y] = Cell.EMPTY;
+        int randomInt = random.nextInt(gridWidth() * gridHeight() - SnakeParts.size());
         for (Point excludedPoint : SnakeParts) {
             int excludedInt = excludedPoint.X + excludedPoint.Y * gridWidth();
             if (randomInt < excludedInt) {
@@ -58,7 +76,9 @@ public class GameState {
             }
             randomInt++;
         }
-        Apple.X = randomInt % gridWidth();
-        Apple.Y = randomInt / gridWidth();
+        int x = randomInt % gridWidth();
+        int y = randomInt / gridWidth();
+        Apple = new Point(x, y);
+        Grid[x][y] = Cell.APPLE;
     }
 }

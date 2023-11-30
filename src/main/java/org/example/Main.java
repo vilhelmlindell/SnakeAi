@@ -1,55 +1,91 @@
 package org.example;
 
 import java.awt.*;
+import java.util.ArrayList;
 
 public class Main extends Java1 {
-    private static final int CELL_SIZE = 10;
+    public static final int CELL_SIZE = 30;
+    public static final int STARTING_LENGTH = 3;
+    private static final boolean PLAYER_CONTROLS = false;
     private final int GRID_WIDTH = WIDTH / CELL_SIZE;
     private final int GRID_HEIGHT = HEIGHT / CELL_SIZE;
-    
-    private GameState gameState;
+    private final GameState gameState;
+    private final SnakeAi snakeAi;
+
+    private ArrayList<Direction> pathToApple;
     
     public static void main(String[] args) {
         Main main = new Main();
-        main.gameState = new GameState(main.GRID_WIDTH, main.GRID_HEIGHT);
-        main.gameState.generateApple();
-        main.initializeSnake();
-        
-        main.setDelay(100);
+    }
+    public Main() {
+        gameState = new GameState(GRID_WIDTH, GRID_HEIGHT);
+        gameState.generateApple();
+        snakeAi = new SnakeAi(gameState);
+        initializeSnake();
+        if (!PLAYER_CONTROLS) {
+            pathToApple = (ArrayList<Direction>) snakeAi.aStar(gameState.SnakeParts.getLast(), gameState.Apple);
+        }
+        setDelay(30);
     }
 
     @Override
     protected void loop() {
+        clear();
         if (gameState.GameOver) {
+            drawPath();
             return;
         }
+        if (gameState.ReachedApple) {
+            gameState.generateApple();
+            if (!PLAYER_CONTROLS) {
+                pathToApple = (ArrayList<Direction>) snakeAi.aStar(gameState.SnakeParts.getLast(), gameState.Apple);
+            }
+            gameState.ReachedApple = false;
+        }
         
-        if (keyUp && gameState.SnakeDirection != Direction.SOUTH) {
-            gameState.SnakeDirection = Direction.NORTH;
-        }
-        if (keyDown && gameState.SnakeDirection != Direction.NORTH) {
-            gameState.SnakeDirection = Direction.SOUTH;
-        }
-        if (keyLeft && gameState.SnakeDirection != Direction.EAST) {
-            gameState.SnakeDirection = Direction.WEST;
-        }
-        if (keyRight && gameState.SnakeDirection != Direction.WEST) {
-            gameState.SnakeDirection = Direction.EAST;
+        if (PLAYER_CONTROLS) {
+            if (keyUp && gameState.SnakeDirection != Direction.SOUTH) {
+                gameState.SnakeDirection = Direction.NORTH;
+            }
+            if (keyDown && gameState.SnakeDirection != Direction.NORTH) {
+                gameState.SnakeDirection = Direction.SOUTH;
+            }
+            if (keyLeft && gameState.SnakeDirection != Direction.EAST) {
+                gameState.SnakeDirection = Direction.WEST;
+            }
+            if (keyRight && gameState.SnakeDirection != Direction.WEST) {
+                gameState.SnakeDirection = Direction.EAST;
+            }
+        } else {
+            gameState.SnakeDirection = pathToApple.getLast();
+            pathToApple.removeLast();
+            drawPath();
         }
         
         gameState.update();
         
-        clear();
-        drawRectangle(gameState.Apple.X * CELL_SIZE, gameState.Apple.Y * CELL_SIZE, CELL_SIZE, CELL_SIZE, Color.RED);
+        fillRectangle(gameState.Apple.X * CELL_SIZE, gameState.Apple.Y * CELL_SIZE, CELL_SIZE, CELL_SIZE, Color.RED);
         
         for (Point snakePart : gameState.SnakeParts) {
-            drawRectangle(snakePart.X * CELL_SIZE, snakePart.Y * CELL_SIZE, CELL_SIZE, CELL_SIZE, Color.BLUE);
+            fillRectangle(snakePart.X * CELL_SIZE, snakePart.Y * CELL_SIZE, CELL_SIZE, CELL_SIZE, Color.BLUE);
         }
     }
     
     private void initializeSnake() {
-        gameState.SnakeParts.add(new Point(10, 10));
-        gameState.SnakeParts.add(new Point(11, 10));
+        Point head = new Point(GRID_WIDTH / 2, GRID_HEIGHT / 2);
+        for (int i = STARTING_LENGTH; i > 0; i--) {
+            Point bodyPart = Point.subtract(head, new Point(i, 0));
+            gameState.SnakeParts.add(bodyPart);
+            gameState.Grid[bodyPart.X][bodyPart.Y] = Cell.SNAKE;
+        }
+        gameState.Grid[head.X][head.Y] = Cell.HEAD;
+        gameState.SnakeParts.add(head);
         gameState.SnakeDirection = Direction.EAST;
+    }
+    
+    private void drawPath() {
+        for (Point point : snakeAi.pathPoints) {
+            drawRectangle(point.X * CELL_SIZE, point.Y * CELL_SIZE, CELL_SIZE, CELL_SIZE, Color.GREEN);
+        }
     }
 }
